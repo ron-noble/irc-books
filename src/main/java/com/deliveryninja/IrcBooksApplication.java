@@ -36,8 +36,6 @@ public class IrcBooksApplication extends ListenerAdapter {
             PircBotX myBot = new PircBotX(config);
 
             myBot.startBot();
-
-            myBot.send().message();
 		};
 	}
 
