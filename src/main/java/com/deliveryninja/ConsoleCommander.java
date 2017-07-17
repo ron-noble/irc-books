@@ -13,6 +13,8 @@ public class ConsoleCommander {
 
         Runnable runnable = new Runnable() {
 
+            public static final String SEARCH_PREFIX = "@search";
+
             @Override
             public void run() {
                 search();
@@ -24,7 +26,7 @@ public class ConsoleCommander {
                 String search = scanner.nextLine();
                 System.out.println("SEARCH STARTED : " + search);
 
-                bot.send().message("ebooks", search);
+                bot.send().message("#ebooks", SEARCH_PREFIX + " " + search);
             }
 
         };
@@ -32,4 +34,5 @@ public class ConsoleCommander {
         Thread thread = new Thread(runnable);
         thread.start();
     }
+
 }
