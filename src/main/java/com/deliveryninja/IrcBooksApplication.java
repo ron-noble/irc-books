@@ -1,34 +1,40 @@
 package com.deliveryninja;
 
 import com.github.junrar.extract.ExtractArchive;
-import com.google.common.annotations.VisibleForTesting;
-import org.junit.jupiter.api.Test;
 import org.pircbotx.Configuration;
 import org.pircbotx.PircBotX;
 import org.pircbotx.UtilSSLSocketFactory;
 import org.pircbotx.hooks.ListenerAdapter;
 import org.pircbotx.hooks.events.IncomingFileTransferEvent;
-import org.pircbotx.hooks.types.GenericMessageEvent;
+import org.pircbotx.hooks.events.PrivateMessageEvent;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 @SpringBootApplication
 public class IrcBooksApplication extends ListenerAdapter {
 
-	private static final String DESTINATION_PATH = "D:\\local\\ebooks\\temp\\";
+	private static final String DESTINATION_PATH = "C:\\local\\ebooks\\temp\\";
+    private static final String EBOOKS_PATH = "C:\\local\\ebooks\\";
 
 	public static void main(String[] args) {
 		SpringApplication.run(IrcBooksApplication.class, args);
 	}
+
+	private ConsoleCommander consoleCommander;
+
+	List<String> fileExtensions = Arrays.asList("mobi");
 
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
@@ -47,56 +53,83 @@ public class IrcBooksApplication extends ListenerAdapter {
 
             PircBotX myBot = new PircBotX(config);
 
-            ConsoleCommander commander = new ConsoleCommander(myBot);
+            consoleCommander = new ConsoleCommander(myBot);
+            consoleCommander.run();
             myBot.startBot();
 		};
 	}
 
 	@Override
+    public void onPrivateMessage(PrivateMessageEvent event) throws Exception {
+        System.out.println("PM: " + event.getMessage());
+	}
+
+	@Override
 	public void onIncomingFileTransfer(IncomingFileTransferEvent event) throws Exception {
-		System.out.println("--== SEARCH RESULTS ==--");
+        System.out.println("Downloading DCC Request");
 
-		//Generate a file prefix
-		String prefix = "pircbotxFile" + System.currentTimeMillis() + "-";
+	    final File destination = new File(DESTINATION_PATH);
 
+//        if(destination.isDirectory()){
+//            Arrays.stream(destination.listFiles()).forEach(File::delete);
+//        }
+
+	    String prefix = "pircbotxFile" + System.currentTimeMillis() + "-";
 		String suffix = event.getSafeFilename();
-
-		//Create this file in the temp directory
 		File file = File.createTempFile(prefix, suffix, new File(DESTINATION_PATH));
 
-		//Receive the file from the user
-		event.accept(file).transfer();
+        event.accept(file).transfer();
 
-		unrarFile(file);
+        //System.out.println("filename: " + file.getName());
+        if(file.getName().contains("SearchBot")){
+            System.out.println("--== SEARCH RESULTS ==--");
+            //System.out.println("Clearing files");
+
+            File outputFile = ZipUtils.unzip(file.getAbsolutePath(), destination.getPath());
+            file.delete();
+
+            readFile(outputFile.getAbsolutePath());
+        } else {
+            ExtractArchive extractArchive = new ExtractArchive();
+            extractArchive.extractArchive(file, new File(EBOOKS_PATH));
+
+            System.out.println("-== Download Complete : " + file.getName() + " ==-");
+            file.delete();
+        }
+
+        consoleCommander.run();
 	}
 
-	public void unrarFile(File file){
-		final File destination = new File(DESTINATION_PATH);
-		ExtractArchive extractArchive = new ExtractArchive();
-		extractArchive.extractArchive(file, destination);
+	public void readFile(String file){
+        List<String> lines = new ArrayList<>();
+        //read file into stream, try-with-resources
 
-		readFile(destination);
+        try (Stream<String> stream = Files.lines(Paths.get(file))){
+            stream.filter(this::checkExtension).forEach(lines::add);
+            int i = 0;
+            for(String book : lines){
+                System.out.println(i + " " + book);
+                i++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if(lines.size() > 0){
+            consoleCommander.selectDownload(lines);
+        } else {
+            System.out.println("No search results");
+        }
 	}
 
-	public void readFile(File file){
-		List<String> lines = new ArrayList<>();
+	private boolean checkExtension(String bookName){
+	    boolean keep = false;
+	    for(String extension : fileExtensions){
+	        if(bookName.contains(extension)){
+	            keep = true;
+            }
+        }
 
-		try(BufferedReader br = new BufferedReader(new FileReader(file))) {
-			String line = br.readLine();
-
-			int i = 0;
-			while (line != null) {
-				lines.add(line);
-				System.out.println("RESULT " + i + " " + line);
-
-				i++;
-				line = br.readLine();
-			}
-
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+        return keep;
+    }
 }
