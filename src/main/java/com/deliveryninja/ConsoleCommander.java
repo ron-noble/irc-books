@@ -24,13 +24,17 @@ public class ConsoleCommander {
         System.out.println("Search: ");
         Scanner scanner = new Scanner(System.in);
         String search = scanner.nextLine();
-        System.out.println("SEARCH STARTED : " + search);
+        System.out.println("searching... " + search);
+
+        if(search.equals("exit")){
+            System.exit(1);
+        }
 
         bot.send().message("#ebooks", SEARCH_PREFIX + " " + search);
     }
 
     public void selectDownload(List<String> lines) {
-        System.out.println("choose download or exit: ");
+        System.out.println("Choose Download or exit: ");
         Scanner scanner = new Scanner(System.in);
         String command = scanner.next();
 
@@ -38,13 +42,13 @@ public class ConsoleCommander {
             search();
         }
 
-        Integer index = scanner.nextInt();
+        Integer index = Integer.valueOf(command);
 
         String search = lines.get(index);
         int i = search.lastIndexOf("  ");
         search = search.substring(0, i);
 
-        System.out.println("Trying to download: " + search);
+        System.out.println("Trying to Download: " + search);
         bot.send().message("#ebooks",  search);
     }
 }

@@ -27,8 +27,9 @@ public class IrcBooksApplication extends ListenerAdapter {
 
 	private static final String DESTINATION_PATH = "C:\\local\\ebooks\\temp\\";
     private static final String EBOOKS_PATH = "C:\\local\\ebooks\\";
+    private static final boolean EXTENSIONS_DISABLED = true;
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
 		SpringApplication.run(IrcBooksApplication.class, args);
 	}
 
@@ -61,7 +62,7 @@ public class IrcBooksApplication extends ListenerAdapter {
 
 	@Override
     public void onPrivateMessage(PrivateMessageEvent event) throws Exception {
-        System.out.println("PM: " + event.getMessage());
+        System.out.println("Private Msg: " + event.getMessage());
 	}
 
 	@Override
@@ -74,15 +75,15 @@ public class IrcBooksApplication extends ListenerAdapter {
 //            Arrays.stream(destination.listFiles()).forEach(File::delete);
 //        }
 
-	    String prefix = "pircbotxFile" + System.currentTimeMillis() + "-";
-		String suffix = event.getSafeFilename();
+	    String prefix = "temp"+ "-";
+		String suffix = event.getRawFilename();
 		File file = File.createTempFile(prefix, suffix, new File(DESTINATION_PATH));
 
         event.accept(file).transfer();
 
         //System.out.println("filename: " + file.getName());
         if(file.getName().contains("SearchBot")){
-            System.out.println("--== SEARCH RESULTS ==--");
+            System.out.println("--== Search Results ==--");
             //System.out.println("Clearing files");
 
             File outputFile = ZipUtils.unzip(file.getAbsolutePath(), destination.getPath());
@@ -93,7 +94,8 @@ public class IrcBooksApplication extends ListenerAdapter {
             ExtractArchive extractArchive = new ExtractArchive();
             extractArchive.extractArchive(file, new File(EBOOKS_PATH));
 
-            System.out.println("-== Download Complete : " + file.getName() + " ==-");
+            System.out.println("-== Download Complete ==-");
+            System.out.println("-== " + file.getName().replace("temp-", "") + " ==-");
             file.delete();
         }
 
@@ -123,6 +125,8 @@ public class IrcBooksApplication extends ListenerAdapter {
 	}
 
 	private boolean checkExtension(String bookName){
+	    if(EXTENSIONS_DISABLED) return true;
+
 	    boolean keep = false;
 	    for(String extension : fileExtensions){
 	        if(bookName.contains(extension)){
