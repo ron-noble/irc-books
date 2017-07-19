@@ -10,9 +10,11 @@ public class ConsoleCommander {
     private final PircBotX bot;
 
     public static final String SEARCH_PREFIX = "@search";
+    private final String ircChannel;
 
-    public ConsoleCommander(PircBotX bot){
+    public ConsoleCommander(PircBotX bot, String ircChannel){
         this.bot = bot;
+        this.ircChannel = ircChannel;
     }
 
     public void run(){
@@ -21,7 +23,7 @@ public class ConsoleCommander {
     }
 
     public void search() {
-        System.out.println("Search: ");
+        System.out.print("Search: ");
         Scanner scanner = new Scanner(System.in);
         String search = scanner.nextLine();
         System.out.println("searching... " + search);
@@ -30,11 +32,11 @@ public class ConsoleCommander {
             System.exit(1);
         }
 
-        bot.send().message("#ebooks", SEARCH_PREFIX + " " + search);
+        bot.send().message(ircChannel, SEARCH_PREFIX + " " + search);
     }
 
     public void selectDownload(List<String> lines) {
-        System.out.println("Choose Download or exit: ");
+        System.out.print("Choose Download or exit: ");
         Scanner scanner = new Scanner(System.in);
         String command = scanner.next();
 
@@ -49,6 +51,6 @@ public class ConsoleCommander {
         search = search.substring(0, i);
 
         System.out.println("Trying to Download: " + search);
-        bot.send().message("#ebooks",  search);
+        bot.send().message(ircChannel,  search);
     }
 }
