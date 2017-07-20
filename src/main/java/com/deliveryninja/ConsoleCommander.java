@@ -26,9 +26,14 @@ public class ConsoleCommander {
         System.out.print("Search: ");
         Scanner scanner = new Scanner(System.in);
         String search = scanner.nextLine();
+
+        if(search.isEmpty())
+            search();
+
         System.out.println("searching... " + search);
 
         if(search.equals("exit")){
+            System.out.println("Goodbye!");
             System.exit(1);
         }
 
@@ -41,7 +46,7 @@ public class ConsoleCommander {
         String command = scanner.next();
 
         if(command.equals("exit")){
-            search();
+            return;
         }
 
         Integer index = Integer.valueOf(command);
@@ -52,5 +57,7 @@ public class ConsoleCommander {
 
         System.out.println("Trying to Download: " + search);
         bot.send().message(ircChannel,  search);
+
+        selectDownload(lines);
     }
 }
