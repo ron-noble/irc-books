@@ -126,12 +126,27 @@ public class IrcClient extends ListenerAdapter {
     }
 
     private void processEbookDCC(File file) {
-        ExtractArchive extractArchive = new ExtractArchive();
-        extractArchive.extractArchive(file, new File(downloadFolder));
+        if(file.getName().contains(".rar")){
+            ExtractArchive extractArchive = new ExtractArchive();
+            extractArchive.extractArchive(file, new File(downloadFolder));
+            file.delete();
+        } else {
+            moveFile(file);
+        }
 
         System.out.println("-== Download Complete ==-");
         System.out.println("-== " + file.getName().replace("temp-", "") + " ==-");
-        file.delete();
+    }
+
+    private void moveFile(File file){
+        try{
+            if(file.renameTo(new File(downloadFolder + "/" + file.getName().replace("temp-", "")))){
+            }else{
+                System.out.println("File is failed to move!");
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     private void processSearchDCC(File destination, File file) {
