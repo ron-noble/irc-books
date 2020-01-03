@@ -1,5 +1,6 @@
 package com.deliveryninja;
 
+import com.github.junrar.exception.RarException;
 import com.github.junrar.extract.ExtractArchive;
 import org.pircbotx.Configuration;
 import org.pircbotx.PircBotX;
@@ -128,8 +129,14 @@ public class IrcClient extends ListenerAdapter {
     private void processEbookDCC(File file) {
         if(file.getName().contains(".rar")){
             ExtractArchive extractArchive = new ExtractArchive();
-            extractArchive.extractArchive(file, new File(downloadFolder));
-            file.delete();
+            try {
+                extractArchive.extractArchive(file, new File(downloadFolder));
+                file.delete();
+            } catch (RarException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else {
             moveFile(file);
         }
